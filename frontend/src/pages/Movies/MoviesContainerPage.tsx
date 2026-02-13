@@ -1,15 +1,18 @@
+import React, { useEffect, useState } from "react";
 import {
     useGetNewMoviesQuery,
     useGetTopMoviesQuery,
     useGetRandomMoviesQuery,
 } from "../../redux/api/movies";
 import SliderUtil from "../../components/SlideUtil";
-import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-const MoviesContainerPage = () => {
-    const { data: newMovies, isLoading: loadingNew } = useGetNewMoviesQuery({});
-    const { data: topMovies, isLoading: loadingTop } = useGetTopMoviesQuery({});
-    const { data: randomMovies, isLoading: loadingRandom } = useGetRandomMoviesQuery({});
+const MoviesContainerPage: React.FC = () => {
+    // RTK Query hooks: call without unnecessary empty args
+    const { data: newMovies, isLoading: loadingNew } = useGetNewMoviesQuery();
+    const { data: topMovies, isLoading: loadingTop } = useGetTopMoviesQuery();
+    const { data: randomMovies, isLoading: loadingRandom } = useGetRandomMoviesQuery();
+
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -30,8 +33,8 @@ const MoviesContainerPage = () => {
                                 <span className="absolute left-0 sm:-left-4 top-0 bottom-0 w-1 bg-blue-500 rounded-full"></span>
                                 New Releases
                             </h2>
-                            <a
-                                href="/movies"
+                            <Link
+                                to="/movies"
                                 className="group flex items-center mt-2 sm:mt-0 text-blue-400 hover:text-blue-300 text-sm md:text-base transition-colors duration-300"
                             >
                                 View All
@@ -42,14 +45,9 @@ const MoviesContainerPage = () => {
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 5l7 7-7 7"
-                                    />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
-                            </a>
+                            </Link>
                         </div>
                         <div className="bg-gray-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 shadow-xl hover:shadow-blue-900/20 transition-all duration-500">
                             {loadingNew ? (
@@ -57,7 +55,7 @@ const MoviesContainerPage = () => {
                                     <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 border-t-2 border-b-2 border-blue-500"></div>
                                 </div>
                             ) : (
-                                <SliderUtil data={newMovies || []} />
+                                <SliderUtil data={Array.isArray(newMovies) ? newMovies : []} />
                             )}
                         </div>
                     </div>
@@ -68,8 +66,8 @@ const MoviesContainerPage = () => {
                                 <span className="absolute left-0 sm:-left-4 top-0 bottom-0 w-1 bg-orange-500 rounded-full"></span>
                                 Top Rated
                             </h2>
-                            <a
-                                href="/movies"
+                            <Link
+                                to="/movies"
                                 className="group flex items-center mt-2 sm:mt-0 text-blue-400 hover:text-blue-300 text-sm md:text-base transition-colors duration-300"
                             >
                                 View All
@@ -80,14 +78,9 @@ const MoviesContainerPage = () => {
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 5l7 7-7 7"
-                                    />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
-                            </a>
+                            </Link>
                         </div>
                         <div className="bg-gray-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 shadow-xl hover:shadow-yellow-900/20 transition-all duration-500">
                             {loadingTop ? (
@@ -95,7 +88,7 @@ const MoviesContainerPage = () => {
                                     <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 border-t-2 border-b-2 border-yellow-500"></div>
                                 </div>
                             ) : (
-                                <SliderUtil data={topMovies || []} />
+                                <SliderUtil data={Array.isArray(topMovies) ? topMovies : []} />
                             )}
                         </div>
                     </div>
@@ -106,8 +99,8 @@ const MoviesContainerPage = () => {
                                 <span className="absolute left-0 sm:-left-4 top-0 bottom-0 w-1 bg-purple-500 rounded-full"></span>
                                 Recommended For You
                             </h2>
-                            <a
-                                href="/movies"
+                            <Link
+                                to="/movies"
                                 className="group flex items-center mt-2 sm:mt-0 text-blue-400 hover:text-blue-300 text-sm md:text-base transition-colors duration-300"
                             >
                                 View All
@@ -118,14 +111,9 @@ const MoviesContainerPage = () => {
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 5l7 7-7 7"
-                                    />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
-                            </a>
+                            </Link>
                         </div>
                         <div className="bg-gray-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 shadow-xl hover:shadow-purple-900/20 transition-all duration-500">
                             {loadingRandom ? (
@@ -133,7 +121,7 @@ const MoviesContainerPage = () => {
                                     <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 border-t-2 border-b-2 border-purple-500"></div>
                                 </div>
                             ) : (
-                                <SliderUtil data={randomMovies || []} />
+                                <SliderUtil data={Array.isArray(randomMovies) ? randomMovies : []} />
                             )}
                         </div>
                     </div>

@@ -2,12 +2,12 @@ import { useGetRandomMoviesQuery } from "../../redux/api/movies";
 import HeroSlider from "../../components/HeroSlider";
 
 const Header = () => {
-    const { data: randomMovies } = useGetRandomMoviesQuery({});
+    const { data: randomMovies } = useGetRandomMoviesQuery();
 
     return (
         <div className="mx-auto">
             <div className="w-full">
-                <HeroSlider data={randomMovies} />
+                <HeroSlider  data={randomMovies ?? []} />
             </div>
         </div>
     );

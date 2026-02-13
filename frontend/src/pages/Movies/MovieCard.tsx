@@ -1,18 +1,48 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { MovieProps } from "../../types/movieTypes";
+import { youtubeThumbFallback } from "../../utils/youtube";
 
-const MovieCard = ({ movie }: { movie: MovieProps }) => {
+const MovieCard: React.FC<{ movie: MovieProps }> = ({ movie }) => {
+    // pick poster: explicit movie.image > first youtube video thumb > youtube img fallback
+    const posterSrc =
+        movie?.image ||
+        (Array.isArray(movie?.videos) && movie.videos.length > 0
+            ? youtubeThumbFallback(movie.videos[0].youtubeId, movie.videos[0].thumbnails)
+            : "/images/fallback_poster.jpg");
+
+    // safe rating (show only if numeric)
+    const hasRating = movie && typeof movie.rating === "number" && !Number.isNaN(movie.rating);
+
+    // primary genre label (safe)
+    const primaryGenre =
+        Array.isArray(movie?.genre) && movie.genre.length > 0 && movie.genre[0]?.name
+            ? movie.genre[0].name
+            : null;
+
     return (
         <div className="group relative overflow-hidden rounded-lg sm:rounded-xl bg-gray-800 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-700/50 h-full">
             <Link to={`/movies/${movie._id}`} className="block h-full">
-                <div className="aspect-[2/3] overflow-hidden">
+                <div className="aspect-[2/3] overflow-hidden relative">
                     <img
-                        src={movie.image}
-                        alt={movie.name}
+                        src={posterSrc}
+                        alt={movie.name || "Poster"}
                         className="w-full h-full object-cover transition-all duration-500 transform group-hover:scale-105 sm:group-hover:scale-110"
                         loading="lazy"
+                        onError={(e) => {
+                            // fallback if image 404s
+                            (e.currentTarget as HTMLImageElement).src = `/images/fallback_poster.jpg`;
+                        }}
                     />
-                    {movie.rating && (
+
+                    {/* YouTube series badge */}
+                    {movie?.source === "youtube" && (
+                        <div className="absolute top-2 left-2 bg-indigo-600 text-white text-[10px] sm:text-xs px-2 py-1 rounded-md font-semibold shadow">
+                            Series
+                        </div>
+                    )}
+
+                    {hasRating && (
                         <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 bg-yellow-500 text-2xs sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-black shadow-lg flex items-center">
                             <svg
                                 className="w-2 h-2 sm:w-3 sm:h-3 mr-0.5 sm:mr-1"
@@ -33,16 +63,15 @@ const MovieCard = ({ movie }: { movie: MovieProps }) => {
                     </h3>
 
                     <div className="flex items-center justify-between mt-1 sm:mt-2">
-                        <span className="text-2xs sm:text-xs md:text-sm text-gray-400">
-                            {movie.year}
-                        </span>
-                        {Array.isArray(movie.genre) &&
-                            movie.genre.length > 0 &&
-                            movie.genre[0]?.name && (
-                                <span className="text-2xs sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-indigo-900/50 text-indigo-200 rounded-full truncate max-w-[90px] sm:max-w-none">
-                                    {movie.genre[0].name}
-                                </span>
-                            )}
+            <span className="text-2xs sm:text-xs md:text-sm text-gray-400">
+              {movie.year || "—"}
+            </span>
+
+                        {primaryGenre && (
+                            <span className="text-2xs sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-indigo-900/50 text-indigo-200 rounded-full truncate max-w-[90px] sm:max-w-none">
+                {primaryGenre}
+              </span>
+                        )}
                     </div>
                 </div>
 
@@ -55,22 +84,17 @@ const MovieCard = ({ movie }: { movie: MovieProps }) => {
                             {movie.detail || "No description available"}
                         </p>
                         <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 mb-1 sm:mb-2 rounded-full text-2xs sm:text-xs font-medium bg-indigo-600/80 text-white">
-                            View Details
-                            <svg
-                                className="w-2 h-2 sm:w-3 sm:h-3 ml-0.5 sm:ml-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M9 5l7 7-7 7"
-                                ></path>
-                            </svg>
-                        </span>
+              View Details
+              <svg
+                  className="w-2 h-2 sm:w-3 sm:h-3 ml-0.5 sm:ml-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </span>
                     </div>
                 </div>
             </Link>

@@ -1,5 +1,6 @@
 import { apiSlice } from "./apiSlice";
 import { MOVIES_URL, UPLOADS_URL } from "../constants";
+import {MovieProps} from "../../types/movieTypes.ts";
 
 export const moviesApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -35,19 +36,19 @@ export const moviesApiSlice = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
-        getNewMovies: builder.query({
+        getNewMovies: builder.query<MovieProps[], void>({
             query: () => ({
                 url: `${MOVIES_URL}/new-movies`,
                 method: 'GET',
             }),
         }),
-        getTopMovies: builder.query({
+        getTopMovies: builder.query<MovieProps[], void>({
             query: () => ({
                 url: `${MOVIES_URL}/top-movies`,
                 method: 'GET',
             }),
         }),
-        getRandomMovies: builder.query({
+        getRandomMovies:builder.query<MovieProps[], void>({
             query: () => ({
                 url: `${MOVIES_URL}/random-movies`,
                 method: 'GET',

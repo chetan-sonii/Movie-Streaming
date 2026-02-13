@@ -8,7 +8,7 @@ import { useGetAllRequestsQuery } from "../../../../redux/api/requests";
 import { MovieProps } from "../../../../types/movieTypes";
 
 const Main = () => {
-    const { data: topMovies } = useGetTopMoviesQuery({});
+    const { data: topMovies } = useGetTopMoviesQuery();
     const { data: visitors } = useGetUsersQuery({});
     const { data: allMovies } = useGetAllMoviesQuery({});
     const { data: allRequests } = useGetAllRequestsQuery({});
@@ -58,11 +58,11 @@ const Main = () => {
                         {topMovies?.map((movie: MovieProps) => (
                             <VideoCard
                                 key={movie._id}
-                                image={movie.image}
+                                image={movie.image ?? "image not found"}
                                 title={movie.name}
-                                rating={movie.rating}
-                                date={movie.year}
-                                commentsNumber={movie.numReviews}
+                                rating={movie.rating ?? 0}
+                                date={movie.year?.toString() ?? ""}
+                                commentsNumber={movie.numReviews ?? 0}
                             />
                         ))}
                     </div>

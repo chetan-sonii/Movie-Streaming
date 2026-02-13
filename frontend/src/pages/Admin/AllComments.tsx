@@ -30,7 +30,8 @@ const AllComments = () => {
                     key={movie._id}
                     className="flex flex-col justify-center items-center px-3 sm:px-4"
                 >
-                    {movie?.reviews.map((review) => (
+                    {Array.isArray(movie.reviews) &&
+                        movie.reviews.map((review) => (
                         <div
                             key={review._id}
                             className="bg-[#1A1A1A] p-3 sm:p-4 rounded-lg w-full sm:w-[80%] md:w-[70%] lg:w-[60%] xl:w-[50%] mt-3 sm:mt-4 md:mt-[2rem]"
