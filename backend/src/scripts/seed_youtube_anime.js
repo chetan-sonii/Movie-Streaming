@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const YT_API_KEY = "AIzaSyBUI5s_OUC1dL6d326UyrW95WLJBtbQpvQ";
-const MONGO_URI = "mongodb://localhost:27017/MovieApp";
+const MONGO_URI = "mongodb+srv://gauravnandeshwar:anistream@cluster0.umbva7c.mongodb.net/mydatabase";
 
 const TARGET_COUNTRY = (process.env.TARGET_COUNTRY || "IN").toUpperCase();
 const CHANNEL_QUERIES = [

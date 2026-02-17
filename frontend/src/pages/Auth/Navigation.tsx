@@ -7,6 +7,65 @@ import { toast } from "react-toastify";
 import { logout } from "../../redux/features/auth/authSlice";
 import { RootState } from "../../redux/store";
 
+// ── Anistream Logo ──────────────────────────────────────────────
+const AnistreamLogo = () => (
+    <Link
+        to="/"
+        className="flex items-center gap-2 mr-4 group select-none"
+        style={{ textDecoration: "none" }}
+    >
+        {/* Icon: rounded square with gradient + play triangle */}
+        <svg
+            width="34"
+            height="34"
+            viewBox="0 0 34 34"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
+        >
+            <defs>
+                <linearGradient id="aniGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#e11d48" />
+                    <stop offset="100%" stopColor="#9333ea" />
+                </linearGradient>
+                <filter id="aniGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.2" result="blur" />
+                    <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+            {/* Background rounded square */}
+            <rect x="0.5" y="0.5" width="33" height="33" rx="8" fill="url(#aniGrad)" />
+            <rect x="0.5" y="0.5" width="33" height="33" rx="8" stroke="rgba(255,255,255,0.18)" strokeWidth="1" fill="none" />
+            {/* Play triangle */}
+            <path
+                d="M13 10.5L24 17L13 23.5V10.5Z"
+                fill="white"
+                filter="url(#aniGlow)"
+            />
+            {/* Sparkle dot – anime flair */}
+            <circle cx="25.5" cy="8.5" r="2" fill="#f9a8d4" opacity="0.9" />
+        </svg>
+
+        {/* Wordmark */}
+        <span
+            className="text-[1.15rem] font-black tracking-tight leading-none"
+            style={{
+                background: "linear-gradient(135deg, #ffffff 0%, #fda4af 55%, #c084fc 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "-0.01em",
+            }}
+        >
+            Ani<span style={{ fontWeight: 900 }}>stream</span>
+        </span>
+    </Link>
+);
+// ───────────────────────────────────────────────────────────────
+
 const Navigation = () => {
     const { userInfo } = useSelector((state: RootState) => state.auth);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,6 +97,9 @@ const Navigation = () => {
             <div className="max-w-7xl mx-auto">
                 <section className="flex justify-between items-center">
                     <div className="flex justify-start items-center space-x-8">
+                        {/* ── Anistream Logo (left of nav links) ── */}
+                        <AnistreamLogo />
+
                         <Link
                             to="/"
                             className="flex items-center transition-transform transform hover:-translate-y-1 group relative"

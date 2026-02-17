@@ -1,8 +1,12 @@
-// models/Movie.ts
-import mongoose from "mongoose";
-const { ObjectId } = mongoose.Schema.Types;
-
-const reviewSchema = new mongoose.Schema({
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// models/Movie.js
+const mongoose_1 = __importDefault(require("mongoose"));
+const { ObjectId } = mongoose_1.default.Schema.Types;
+const reviewSchema = new mongoose_1.default.Schema({
     user: { type: ObjectId, ref: "User", required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
@@ -10,8 +14,7 @@ const reviewSchema = new mongoose.Schema({
 }, {
     timestamps: true,
 });
-
-const videoSchema = new mongoose.Schema({
+const videoSchema = new mongoose_1.default.Schema({
     title: { type: String, required: true },
     youtubeId: { type: String, required: true }, // e.g. "dQw4w9WgXcQ"
     season: { type: Number, default: 1 },
@@ -22,8 +25,7 @@ const videoSchema = new mongoose.Schema({
     embeddable: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now }
 });
-
-const movieSchema = new mongoose.Schema({
+const movieSchema = new mongoose_1.default.Schema({
     name: { type: String, required: true },
     tmdbId: { type: Number }, // keep optional if you have TMDB-based movies
     image: { type: String },
@@ -43,5 +45,4 @@ const movieSchema = new mongoose.Schema({
 }, {
     timestamps: true,
 });
-
-export default mongoose.model("Movie", movieSchema);
+exports.default = mongoose_1.default.model("Movie", movieSchema);
