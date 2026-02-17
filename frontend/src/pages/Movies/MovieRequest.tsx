@@ -1,11 +1,12 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { useCreateRequestMutation, useGetAllRequestsQuery } from "../../redux/api/requests";
 import Footer from "../../components/Footer";
 
-const MovieRequest = () => {
-    const [createRequest] = useCreateRequestMutation();
-    const { refetch } = useGetAllRequestsQuery({});
+const MovieRequest: React.FC = () => {
+    const [createRequest, { isLoading: isCreating }] = useCreateRequestMutation();
+    // optional: we only need refetch to update admin list if admin is open in same session
+    const { refetch } = useGetAllRequestsQuery(undefined);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [requestData, setRequestData] = useState({
         movieTitle: "",
@@ -13,7 +14,6 @@ const MovieRequest = () => {
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        e.preventDefault();
         const { name, value } = e.target;
         setRequestData((prevData) => ({
             ...prevData,
@@ -24,15 +24,25 @@ const MovieRequest = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!requestData.movieTitle) {
+        if (!requestData.movieTitle.trim()) {
             toast.error("Please fill in the movie title");
             return;
         }
 
         try {
             setIsSubmitting(true);
+            // unwrap to get thrown errors
             await createRequest(requestData).unwrap();
-            refetch();
+
+            // try refetching admin list if available
+            if (typeof refetch === "function") {
+                try {
+                    await refetch();
+                } catch {
+                    // ignore refetch failure
+                }
+            }
+
             setRequestData({ movieTitle: "", detail: "" });
             toast.success("Movie request submitted successfully!");
         } catch (error) {
@@ -52,8 +62,7 @@ const MovieRequest = () => {
 
                 <div className="bg-gray-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 shadow-xl border border-gray-700/50">
                     <p className="text-center text-base sm:text-lg text-gray-300 mb-6">
-                        Is there a movie you'd like to see on our platform? Let us know by filling
-                        out this form!
+                        Is there a movie you'd like to see on our platform? Let us know by filling out this form!
                     </p>
 
                     <form className="flex flex-col mt-4" onSubmit={handleSubmit}>
@@ -96,12 +105,12 @@ const MovieRequest = () => {
                         <div className="mt-2 flex justify-center sm:justify-end">
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || isCreating}
                                 className={`bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300 font-medium text-sm sm:text-base shadow-lg hover:shadow-blue-500/20 flex items-center ${
-                                    isSubmitting ? "opacity-75 cursor-not-allowed" : ""
+                                    isSubmitting || isCreating ? "opacity-75 cursor-not-allowed" : ""
                                 }`}
                             >
-                                {isSubmitting ? (
+                                {isSubmitting || isCreating ? (
                                     <>
                                         <svg
                                             className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
@@ -134,13 +143,8 @@ const MovieRequest = () => {
                 </div>
 
                 <div className="text-center text-base sm:text-lg mt-8 text-gray-300 max-w-2xl mx-auto">
-                    <p>
-                        Thank you for your interest! We will review your request and try to add it
-                        to our collection.
-                    </p>
-                    <p className="mt-2 text-sm text-gray-400">
-                        Our team typically processes requests within 2-3 business days.
-                    </p>
+                    <p>Thank you for your interest! We will review your request and try to add it to our collection.</p>
+                    <p className="mt-2 text-sm text-gray-400">Our team typically processes requests within 2-3 business days.</p>
                 </div>
             </div>
 

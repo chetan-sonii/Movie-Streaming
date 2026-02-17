@@ -10,11 +10,10 @@ import { useGetGenresQuery } from "../../redux/api/genre";
 import { toast } from "react-toastify";
 import { GenreProps } from "../../types/genreTypes";
 import Sidebar from "./Dashboard/Sidebar/Sidebar";
-// import { MovieProps } from "../../types/movieTypes";
 
 type LocalMovieData = {
     name: string;
-    tmdbId?: number | null;
+    youtubeUrl: string;
     year?: number | null;
     detail: string;
     genre: string[]; // array of genre IDs
@@ -25,13 +24,34 @@ type LocalMovieData = {
     rating?: number | null;
 };
 
+const extractYoutubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    // common patterns: watch?v=, youtu.be/, embed/
+    const videoRegex =
+        /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
+    const m = url.match(videoRegex);
+    return m ? m[1] : null;
+};
+
+const extractYoutubePlaylistId = (url: string): string | null => {
+    if (!url) return null;
+    try {
+        const u = new URL(url, "https://youtube.com");
+        const list = u.searchParams.get("list");
+        return list || null;
+    } catch {
+        // fallback simple regex
+        const m = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+        return m ? m[1] : null;
+    }
+};
+
 const CreateMovies: React.FC = () => {
     const navigate = useNavigate();
 
-    // local form state
     const [movieData, setMovieData] = useState<LocalMovieData>({
         name: "",
-        tmdbId: null,
+        youtubeUrl: "",
         year: null,
         detail: "",
         genre: [],
@@ -45,25 +65,20 @@ const CreateMovies: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [selectedCoverImage, setSelectedCoverImage] = useState<File | null>(null);
 
-    // RTK Query mutations & queries (pass undefined when a void arg is expected)
     const [createMovie, { isLoading: isCreatingMovie }] = useCreateMovieMutation();
     const [uploadMovieImage, { isLoading: isUploadingImage }] = useUploadMovieImageMutation();
 
-    // calling queries with undefined to match typed void input
     const { refetch } = useGetAllMoviesQuery(undefined);
     const { data: genres, isLoading: isLoadingGenres } = useGetGenresQuery(undefined);
 
-    // initialise default genre when genres load and none selected
     useEffect(() => {
         if (Array.isArray(genres) && genres.length > 0 && movieData.genre.length === 0) {
             const firstId = genres[0]._id;
             setMovieData((prev) => ({ ...prev, genre: firstId ? [firstId] : [] }));
         }
-        // include movieData.genre.length to satisfy exhaustive-deps and to re-run when user clears genres
     }, [genres, movieData.genre.length]);
 
-    // helper: numeric fields
-    const numberFieldNames = new Set(["tmdbId", "year", "rating"]);
+    const numberFieldNames = new Set(["year", "rating"]);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -74,8 +89,6 @@ const CreateMovies: React.FC = () => {
             setMovieData((prev) => ({ ...prev, [name]: num }));
             return;
         }
-
-        // normal string fields
         setMovieData((prev) => ({ ...prev, [name]: value }));
     };
 
@@ -89,7 +102,6 @@ const CreateMovies: React.FC = () => {
         setSelectedCoverImage(file);
     };
 
-    // Add a genre id to movieData.genre (keeps duplicates out)
     const addGenreById = (genreId: string) => {
         if (!genreId) return;
         setMovieData((prev) => {
@@ -102,17 +114,34 @@ const CreateMovies: React.FC = () => {
         setMovieData((prev) => ({ ...prev, genre: prev.genre.filter((id) => id !== genreId) }));
     };
 
+    const safeGetImagePathFromUpload = (resUnknown: unknown): string | null => {
+        if (!resUnknown || typeof resUnknown !== "object") return null;
+        const resObj = resUnknown as Record<string, unknown>;
+        if (typeof resObj.image === "string") return resObj.image;
+        if (resObj.data && typeof resObj.data === "object") {
+            const dataObj = resObj.data as Record<string, unknown>;
+            if (typeof dataObj.image === "string") return dataObj.image;
+        }
+        return null;
+    };
+
     const handleCreateMovie = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        // minimal validation
         if (!movieData.name.trim() || !movieData.detail.trim()) {
             toast.error("Please provide at least a name and description.");
             return;
         }
 
+        const videoId = extractYoutubeVideoId(movieData.youtubeUrl);
+        const playlistId = extractYoutubePlaylistId(movieData.youtubeUrl);
+
+        if (!videoId && !playlistId) {
+            toast.error("Please provide a valid YouTube video or playlist URL.");
+            return;
+        }
+
         try {
-            // upload images if provided
             let uploadedImagePath: string | null = null;
             let uploadedCoverPath: string | null = null;
 
@@ -120,17 +149,8 @@ const CreateMovies: React.FC = () => {
                 const fd = new FormData();
                 fd.append("image", selectedImage);
                 try {
-                    // .unwrap() resolves or throws
                     const resUnknown: unknown = await uploadMovieImage(fd).unwrap();
-                    if (resUnknown && typeof resUnknown === "object" && resUnknown !== null) {
-                        const resObj = resUnknown as Record<string, unknown>;
-                        if (typeof resObj.image === "string") {
-                            uploadedImagePath = resObj.image;
-                        } else if (resObj.data && typeof resObj.data === "object") {
-                            const dataObj = resObj.data as Record<string, unknown>;
-                            if (typeof dataObj.image === "string") uploadedImagePath = dataObj.image;
-                        }
-                    }
+                    uploadedImagePath = safeGetImagePathFromUpload(resUnknown);
                 } catch (err: unknown) {
                     if (err instanceof Error) console.error("Image upload failed:", err.message);
                     else console.error("Image upload failed:", err);
@@ -144,15 +164,7 @@ const CreateMovies: React.FC = () => {
                 fd.append("image", selectedCoverImage);
                 try {
                     const resUnknown: unknown = await uploadMovieImage(fd).unwrap();
-                    if (resUnknown && typeof resUnknown === "object" && resUnknown !== null) {
-                        const resObj = resUnknown as Record<string, unknown>;
-                        if (typeof resObj.image === "string") {
-                            uploadedCoverPath = resObj.image;
-                        } else if (resObj.data && typeof resObj.data === "object") {
-                            const dataObj = resObj.data as Record<string, unknown>;
-                            if (typeof dataObj.image === "string") uploadedCoverPath = dataObj.image;
-                        }
-                    }
+                    uploadedCoverPath = safeGetImagePathFromUpload(resUnknown);
                 } catch (err: unknown) {
                     if (err instanceof Error) console.error("Cover upload failed:", err.message);
                     else console.error("Cover upload failed:", err);
@@ -161,19 +173,44 @@ const CreateMovies: React.FC = () => {
                 }
             }
 
-            // prepare final payload for backend
+            type VideoPayload = {
+                title: string;
+                youtubeId: string;
+                season?: number;
+                episode?: number;
+            };
+
+            const videos: VideoPayload[] = [];
+
+            if (playlistId) {
+                // store playlist as a single entry (backend scripts/players can expand)
+                videos.push({
+                    title: movieData.name,
+                    youtubeId: playlistId,
+                    season: 1,
+                    episode: 1,
+                });
+            } else if (videoId) {
+                videos.push({
+                    title: movieData.name,
+                    youtubeId: videoId,
+                    season: 1,
+                    episode: 1,
+                });
+            }
+
             type CreateMoviePayload = {
                 name: string;
                 detail: string;
-                genre: string[]; // ids
+                genre: string[];
                 cast: string[];
                 director?: string;
                 rating?: number;
-                tmdbId?: number | null;
                 year?: number | null;
                 image?: string | null;
                 coverImage?: string | null;
-                source?: "tmdb" | "youtube" | "other";
+                source?: "youtube" | "other";
+                videos?: VideoPayload[];
             };
 
             const payload: CreateMoviePayload = {
@@ -183,47 +220,42 @@ const CreateMovies: React.FC = () => {
                 cast: Array.isArray(movieData.cast) ? movieData.cast : [],
                 director: movieData.director || "",
                 rating: movieData.rating ?? 0,
-                tmdbId: movieData.tmdbId ?? null,
                 year: movieData.year ?? new Date().getFullYear(),
                 image: uploadedImagePath ?? movieData.image ?? null,
                 coverImage: uploadedCoverPath ?? movieData.coverImage ?? null,
-                source: "other",
+                source: "youtube",
+                videos,
             };
 
-            try {
-                await createMovie(payload).unwrap();
-                toast.success("Movie created successfully!");
-                // reset
-                setMovieData({
-                    name: "",
-                    tmdbId: null,
-                    year: null,
-                    detail: "",
-                    genre: [],
-                    image: null,
-                    coverImage: null,
-                    director: "",
-                    cast: [],
-                    rating: null,
-                });
-                setSelectedImage(null);
-                setSelectedCoverImage(null);
-                // refetch if available
-                if (typeof refetch === "function") {
-                    try {
-                        await refetch();
-                    } catch {
-                        // ignore refetch errors
-                    }
+            await createMovie(payload).unwrap();
+            toast.success("YouTube entry created successfully!");
+            setMovieData({
+                name: "",
+                youtubeUrl: "",
+                year: null,
+                detail: "",
+                genre: [],
+                image: null,
+                coverImage: null,
+                director: "",
+                cast: [],
+                rating: null,
+            });
+            setSelectedImage(null);
+            setSelectedCoverImage(null);
+
+            if (typeof refetch === "function") {
+                try {
+                    await refetch();
+                } catch {
+                    // ignore
                 }
-                navigate("/admin/movies-list");
-            } catch (err: unknown) {
-                if (err instanceof Error) console.error("Create movie failed:", err.message);
-                else console.error("Create movie failed:", err);
-                toast.error("Failed to create movie.");
             }
-        } catch (outerErr) {
-            console.error("Unexpected error while creating movie:", outerErr);
+
+            navigate("/admin/movies-list");
+        } catch (err: unknown) {
+            if (err instanceof Error) console.error("Create movie failed:", err.message);
+            else console.error("Create movie failed:", err);
             toast.error("Failed to create movie.");
         }
     };
@@ -233,7 +265,7 @@ const CreateMovies: React.FC = () => {
             <Sidebar />
             <div className="container flex justify-center min-h-screen overflow-hidden pt-2 sm:pt-4 px-3 sm:px-0">
                 <form onSubmit={handleCreateMovie} className="w-full max-w-xs sm:max-w-sm md:max-w-md">
-                    <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">Create Movie</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">Create YouTube Movie / Playlist</h1>
 
                     <div className="mb-3 sm:mb-4">
                         <label className="block mb-1 sm:mb-2 text-xs sm:text-sm font-medium text-white">
@@ -243,19 +275,19 @@ const CreateMovies: React.FC = () => {
                                 name="name"
                                 value={movieData.name}
                                 onChange={handleChange}
-                                placeholder="Enter movie name"
+                                placeholder="Enter movie or series name"
                                 className="border p-1.5 sm:p-2 w-full text-sm sm:text-base"
                             />
                         </label>
 
                         <label className="block mb-1 sm:mb-2 text-xs sm:text-sm font-medium text-white">
-                            TMDB ID (optional):
+                            YouTube video or playlist URL:
                             <input
-                                type="number"
-                                name="tmdbId"
-                                value={movieData.tmdbId ?? ""}
+                                type="text"
+                                name="youtubeUrl"
+                                value={movieData.youtubeUrl}
                                 onChange={handleChange}
-                                placeholder="Enter TMDB ID (if any)"
+                                placeholder="https://www.youtube.com/watch?v=... or https://www.youtube.com/playlist?list=..."
                                 className="border p-1.5 sm:p-2 w-full text-sm sm:text-base"
                             />
                         </label>
@@ -280,7 +312,7 @@ const CreateMovies: React.FC = () => {
                                 value={movieData.detail}
                                 onChange={handleChange}
                                 className="border p-1.5 sm:p-2 w-full bg-white text-black rounded-md text-sm sm:text-base"
-                                placeholder="Enter movie details"
+                                placeholder="Enter movie/series details"
                                 rows={4}
                             />
                         </label>
